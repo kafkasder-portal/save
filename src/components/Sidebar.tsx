@@ -9,7 +9,7 @@ export function Sidebar() {
   const { expandedSections, toggleSection } = useSidebarState()
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r bg-[#0f172a] text-white md:block overflow-y-auto">
+    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r bg-[#0f172a] text-white lg:block overflow-y-auto">
       <div className="flex h-14 items-center gap-2 border-b border-white/10 px-4">
         <Link to="/" className="flex items-center gap-2">
           <span className="text-base font-semibold">Dernek Paneli</span>

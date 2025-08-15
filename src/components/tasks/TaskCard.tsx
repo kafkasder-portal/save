@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { 
   Calendar, 
   User, 
@@ -40,7 +40,7 @@ const statusConfig = {
   cancelled: { color: 'secondary', label: 'İptal Edildi', icon: Circle },
 } as const
 
-export function TaskCard({ 
+export const TaskCard = memo(function TaskCard({ 
   task, 
   onEdit, 
   onDelete, 
@@ -268,4 +268,4 @@ export function TaskCard({
       />
     </div>
   )
-}
+})

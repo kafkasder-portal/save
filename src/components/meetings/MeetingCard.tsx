@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { 
   Calendar, 
   Clock, 
@@ -39,7 +39,7 @@ const typeConfig = {
   interview: { icon: Users, label: 'Mülakat', color: 'text-orange-600' },
 } as const
 
-export function MeetingCard({ 
+export const MeetingCard = memo(function MeetingCard({ 
   meeting, 
   onEdit, 
   onDelete, 
@@ -225,4 +225,4 @@ export function MeetingCard({
       />
     </div>
   )
-}
+})

@@ -108,7 +108,7 @@ export function Modal({
       />
       <div 
         ref={modalRef}
-        className={`relative z-10 w-full rounded-lg border bg-background p-0 shadow-xl ${
+        className={`relative z-10 w-full max-h-[90vh] overflow-y-auto rounded-lg border bg-background p-0 shadow-xl mx-4 ${
           size === 'small' ? 'max-w-md' :
           size === 'medium' ? 'max-w-2xl' :
           size === 'large' ? 'max-w-4xl' :
@@ -129,7 +129,7 @@ export function Modal({
             </button>
           </div>
         )}
-        <div id={ariaDescribedBy || "modal-content"}>
+        <div id={ariaDescribedBy || "modal-content"} className="p-6">
           {children}
         </div>
       </div>
