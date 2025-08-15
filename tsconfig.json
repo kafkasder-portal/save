@@ -15,9 +15,9 @@
     "jsx": "react-jsx",
 
     /* Linting */
-    "strict": false,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
 
     /* Path mapping */
@@ -27,8 +27,8 @@
       "@components/*": ["./src/components/*"],
       "@ui/*": ["./src/components/ui/*"],
       "@lib/*": ["./src/lib/*"],
-      "@hooks/*": ["./src/hooks/*"],
       "@utils/*": ["./src/utils/*"],
+      "@hooks/*": ["./src/hooks/*"],
       "@types/*": ["./src/types/*"],
       "@pages/*": ["./src/pages/*"],
       "@store/*": ["./src/store/*"],
@@ -38,6 +38,21 @@
       "@validators/*": ["./src/validators/*"]
     }
   },
-  "include": ["src/**/*"],
+  "include": [
+    "src/main.tsx",
+    "src/App.tsx",
+    "src/pages/Login.tsx",
+    "src/pages/dashboard/Index.tsx",
+    "src/pages/NotFound.tsx",
+    "src/components/Modal.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx"
+  ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

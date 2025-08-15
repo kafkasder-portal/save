@@ -11,7 +11,7 @@ import {
   Mail,
   MessageSquare,
   FileText,
-  Refresh
+  RefreshCw
 } from 'lucide-react'
 
 interface MessageTemplate {
@@ -184,7 +184,7 @@ export function TemplatePreviewModal({
                   variant="ghost"
                   onClick={resetToSampleData}
                 >
-                  <Refresh className="h-4 w-4 mr-2" />
+                  <RefreshCw className="h-4 w-4 mr-2" />
                   Örnek Verilere Dön
                 </Button>
                 <label className="flex items-center text-sm">

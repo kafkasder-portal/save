@@ -18,10 +18,8 @@ injectSpeedInsights()
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 10 * 60 * 1000, // 10 minutes
-      retry: 3,
-      refetchOnWindowFocus: false,
+      staleTime: 10 * 60 * 1000, // 10 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (eski cacheTime yerine)
     },
     mutations: {
       retry: 1,

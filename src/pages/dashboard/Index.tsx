@@ -1,424 +1,163 @@
-import { useState, useEffect } from 'react'
-import { 
-  Users, 
-  CheckCircle2, 
-  Calendar, 
-  MessageSquare,
-  TrendingUp,
-  Clock,
-  AlertCircle,
-  FileText,
-  Send,
-  UserPlus,
-  Download,
-  Plus,
-  Bell,
-  Settings
-} from 'lucide-react'
-import { StatsCard } from '../../components/dashboard/StatsCard'
-import { QuickActions } from '../../components/dashboard/QuickActions'
-import { RecentActivity } from '../../components/dashboard/RecentActivity'
-import { PerformanceChart } from '../../components/dashboard/PerformanceChart'
-import { Button } from '../../components/ui/Button'
-import { Badge } from '../../components/ui/Badge'
-import { format } from 'date-fns'
-import { tr } from 'date-fns/locale'
-import toast from 'react-hot-toast'
-import { log } from '@/utils/logger'
+import React from 'react'
 
-interface DashboardStats {
-  totalUsers: number
-  activeTasks: number
-  upcomingMeetings: number
-  messagesSent: number
-  completionRate: number
-  responseRate: number
-}
-
-interface ActivityItem {
-  id: string
-  type: 'task' | 'meeting' | 'message' | 'user' | 'system'
-  action: string
-  description: string
-  user: {
-    name: string
-    avatar?: string
-  }
-  target?: {
-    type: string
-    name: string
-  }
-  timestamp: string
-  metadata?: Record<string, any>
-}
-
-export default function DashboardIndex() {
-  const [loading, setLoading] = useState(true)
-  const [stats, setStats] = useState<DashboardStats>({
-    totalUsers: 0,
-    activeTasks: 0,
-    upcomingMeetings: 0,
-    messagesSent: 0,
-    completionRate: 0,
-    responseRate: 0
-  })
-  const [recentActivities, setRecentActivities] = useState<ActivityItem[]>([])
-
-  // Mock data
-  const mockStats: DashboardStats = {
-    totalUsers: 156,
-    activeTasks: 24,
-    upcomingMeetings: 8,
-    messagesSent: 2340,
-    completionRate: 87.5,
-    responseRate: 94.2
-  }
-
-  const mockActivities: ActivityItem[] = [
-    {
-      id: '1',
-      type: 'task',
-      action: 'created',
-      description: 'Yeni proje için görev oluşturdu',
-      user: { name: 'Ahmet Yılmaz' },
-      target: { type: 'görev', name: 'Sistem entegrasyonu' },
-      timestamp: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-      metadata: { priority: 'Yüksek' }
-    },
-    {
-      id: '2',
-      type: 'meeting',
-      action: 'updated',
-      description: 'Haftalık toplantı zamanını güncelledi',
-      user: { name: 'Ayşe Demir' },
-      target: { type: 'toplantı', name: 'Haftalık Sprint' },
-      timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-      metadata: { date: 'Yarın 14:00' }
-    },
-    {
-      id: '3',
-      type: 'message',
-      action: 'sent',
-      description: 'Toplu mesaj gönderdi',
-      user: { name: 'Mehmet Kaya' },
-      target: { type: 'mesaj', name: 'Hoş geldin kampanyası' },
-      timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
-      metadata: { recipients: '150 kişi' }
-    },
-    {
-      id: '4',
-      type: 'user',
-      action: 'invited',
-      description: 'Yeni kullanıcı davet etti',
-      user: { name: 'Fatma Özkan' },
-      target: { type: 'kullanıcı', name: 'Ali Çetin' },
-      timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-      metadata: { role: 'Editör' }
-    },
-    {
-      id: '5',
-      type: 'task',
-      action: 'updated',
-      description: 'Görev durumunu tamamlandı olarak işaretledi',
-      user: { name: 'Zeynep Acar' },
-      target: { type: 'görev', name: 'Veritabanı optimizasyonu' },
-      timestamp: new Date(Date.now() - 90 * 60 * 1000).toISOString(),
-      metadata: { status: 'Tamamlandı' }
-    }
-  ]
-
-  const taskCompletionData = [
-    { label: 'Pzt', value: 12 },
-    { label: 'Sal', value: 19 },
-    { label: 'Çar', value: 15 },
-    { label: 'Per', value: 23 },
-    { label: 'Cum', value: 18 },
-    { label: 'Cmt', value: 8 },
-    { label: 'Paz', value: 5 }
-  ]
-
-  const messageStatsData = [
-    { label: 'E-posta', value: 1450, color: 'bg-blue-500' },
-    { label: 'SMS', value: 680, color: 'bg-green-500' },
-    { label: 'Bildirim', value: 210, color: 'bg-purple-500' }
-  ]
-
-  const userGrowthData = [
-    { label: 'Ocak', value: 120 },
-    { label: 'Şubat', value: 135 },
-    { label: 'Mart', value: 148 },
-    { label: 'Nisan', value: 156 }
-  ]
-
-  useEffect(() => {
-    fetchDashboardData()
-  }, [])
-
-  const fetchDashboardData = async () => {
-    setLoading(true)
-    try {
-      // Simulate API calls
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      setStats(mockStats)
-      setRecentActivities(mockActivities)
-    } catch (error) {
-      log.error('Failed to fetch dashboard data:', error)
-      toast.error('Dashboard verileri yüklenirken hata oluştu')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleQuickAction = (action: string) => {
-    toast.success(`${action} işlemi başlatılıyor...`)
-    // Navigate to respective pages or open modals
-    switch (action) {
-      case 'new-task':
-        // Navigate to tasks page
-        break
-      case 'new-meeting':
-        // Navigate to meetings page
-        break
-      case 'send-message':
-        // Navigate to messages page
-        break
-      case 'new-template':
-        // Open template modal
-        break
-      case 'invite-user':
-        // Open user invite modal
-        break
-      case 'export-data':
-        // Start data export
-        break
-    }
-  }
-
-  const currentHour = new Date().getHours()
-  const getGreeting = () => {
-    if (currentHour < 12) return 'Günaydın'
-    if (currentHour < 18) return 'İyi günler'
-    return 'İyi akşamlar'
-  }
-
+export default function Dashboard() {
   return (
-    <div className="space-y-6">
-      {/* Welcome Header */}
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 p-6 text-white">
-        <div className="relative z-10">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">
-                {getGreeting()}, Hoş geldiniz! 👋
-              </h1>
-              <p className="mt-2 text-blue-100">
-                Bugün {format(new Date(), 'dd MMMM yyyy, EEEE', { locale: tr })}
-              </p>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Dashboard
+          </h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
+            Hoş geldiniz! Bu sizin yönetim paneliniz.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Stat Cards */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                  </svg>
+                </div>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Toplam Kullanıcı</p>
+                <p className="text-2xl font-semibold text-gray-900 dark:text-white">1,234</p>
+              </div>
             </div>
-            
-            <div className="flex gap-3">
-              <Button variant="outline" className="text-white border-white/20 hover:bg-white/10">
-                <Bell className="h-4 w-4 mr-2" />
-                Bildirimler
-              </Button>
-              <Button variant="outline" className="text-white border-white/20 hover:bg-white/10">
-                <Settings className="h-4 w-4 mr-2" />
-                Ayarlar
-              </Button>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Tamamlanan Görevler</p>
+                <p className="text-2xl font-semibold text-gray-900 dark:text-white">567</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Bekleyen Görevler</p>
+                <p className="text-2xl font-semibold text-gray-900 dark:text-white">89</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-red-500 rounded-md flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Aktif Projeler</p>
+                <p className="text-2xl font-semibold text-gray-900 dark:text-white">23</p>
+              </div>
             </div>
           </div>
         </div>
-        
-        {/* Background Pattern */}
-        <div className="absolute top-0 right-0 w-64 h-64 opacity-10">
-          <div className="w-full h-full bg-white rounded-full transform translate-x-32 -translate-y-32" />
-        </div>
-      </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
-        <StatsCard
-          title="Toplam Kullanıcı"
-          value={stats.totalUsers}
-          change={{ value: 12.5, type: 'increase', timeframe: 'Bu ay' }}
-          icon={Users}
-          iconColor="text-blue-600"
-          description="Aktif üyeler"
-          trend={{ data: [120, 135, 148, 156], positive: true }}
-        />
-        
-        <StatsCard
-          title="Aktif Görevler"
-          value={stats.activeTasks}
-          change={{ value: 8.2, type: 'decrease', timeframe: 'Bu hafta' }}
-          icon={CheckCircle2}
-          iconColor="text-green-600"
-          description="Devam eden"
-        />
-        
-        <StatsCard
-          title="Yaklaşan Toplantılar"
-          value={stats.upcomingMeetings}
-          icon={Calendar}
-          iconColor="text-purple-600"
-          description="Sonraki 7 gün"
-        />
-        
-        <StatsCard
-          title="Gönderilen Mesajlar"
-          value={stats.messagesSent}
-          change={{ value: 15.7, type: 'increase', timeframe: 'Bu ay' }}
-          icon={MessageSquare}
-          iconColor="text-orange-600"
-          description="Toplam gönderim"
-        />
-        
-        <StatsCard
-          title="Tamamlanma Oranı"
-          value={`${stats.completionRate}%`}
-          change={{ value: 3.2, type: 'increase', timeframe: 'Bu ay' }}
-          icon={TrendingUp}
-          iconColor="text-emerald-600"
-          description="Görev başarısı"
-        />
-        
-        <StatsCard
-          title="Yanıt Oranı"
-          value={`${stats.responseRate}%`}
-          change={{ value: 1.8, type: 'increase', timeframe: 'Bu hafta' }}
-          icon={Clock}
-          iconColor="text-indigo-600"
-          description="Mesaj yanıtları"
-        />
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Charts */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Task Completion Chart */}
-          <PerformanceChart
-            title="Haftalık Görev Tamamlama"
-            data={taskCompletionData}
-            type="bar"
-            timeframe="Son 7 gün"
-            total={100}
-            change={{ value: 12.5, type: 'increase' }}
-          />
-
-          {/* Message Stats */}
-          <PerformanceChart
-            title="Mesaj Türü Dağılımı"
-            data={messageStatsData}
-            type="pie"
-            timeframe="Bu ay"
-            total={2340}
-            change={{ value: 15.7, type: 'increase' }}
-          />
-
-          {/* User Growth */}
-          <PerformanceChart
-            title="Kullanıcı Artışı"
-            data={userGrowthData}
-            type="line"
-            timeframe="Son 4 ay"
-            total={156}
-            change={{ value: 8.3, type: 'increase' }}
-          />
-        </div>
-
-        {/* Right Column - Actions & Activity */}
-        <div className="space-y-6">
-          {/* Quick Actions */}
-          <QuickActions
-            onNewTask={() => handleQuickAction('new-task')}
-            onNewMeeting={() => handleQuickAction('new-meeting')}
-            onSendMessage={() => handleQuickAction('send-message')}
-            onNewTemplate={() => handleQuickAction('new-template')}
-            onInviteUser={() => handleQuickAction('invite-user')}
-            onExportData={() => handleQuickAction('export-data')}
-          />
-
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Recent Activity */}
-          <RecentActivity
-            activities={recentActivities}
-            limit={8}
-          />
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">Son Aktiviteler</h3>
+            </div>
+            <div className="p-6">
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-900 dark:text-white">Yeni kullanıcı kaydoldu</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">2 saat önce</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-900 dark:text-white">Görev tamamlandı</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">4 saat önce</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-900 dark:text-white">Yeni proje oluşturuldu</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">6 saat önce</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">Hızlı İşlemler</h3>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-2 gap-4">
+                <button className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <div className="text-center">
+                    <svg className="w-8 h-8 mx-auto text-blue-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">Yeni Görev</p>
+                  </div>
+                </button>
+                <button className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <div className="text-center">
+                    <svg className="w-8 h-8 mx-auto text-green-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">Kullanıcı Ekle</p>
+                  </div>
+                </button>
+                <button className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <div className="text-center">
+                    <svg className="w-8 h-8 mx-auto text-purple-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">Rapor Oluştur</p>
+                  </div>
+                </button>
+                <button className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <div className="text-center">
+                    <svg className="w-8 h-8 mx-auto text-orange-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">Ayarlar</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-
-      {/* Today's Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="card">
-          <div className="flex items-center gap-3 mb-4">
-            <Clock className="h-5 w-5 text-blue-600" />
-            <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-              Bugünün Görevleri
-            </h3>
-          </div>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">Yüksek öncelik</span>
-              <Badge variant="destructive">3</Badge>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">Orta öncelik</span>
-              <Badge variant="warning">8</Badge>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">Düşük öncelik</span>
-              <Badge variant="info">12</Badge>
-            </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="flex items-center gap-3 mb-4">
-            <Calendar className="h-5 w-5 text-purple-600" />
-            <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-              Bugünün Toplantıları
-            </h3>
-          </div>
-          <div className="space-y-3">
-            <div className="text-sm">
-              <p className="font-medium text-gray-900 dark:text-gray-100">Ekip Toplantısı</p>
-              <p className="text-gray-500">14:00 - 15:00</p>
-            </div>
-            <div className="text-sm">
-              <p className="font-medium text-gray-900 dark:text-gray-100">Proje Değerlendirme</p>
-              <p className="text-gray-500">16:30 - 17:30</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="flex items-center gap-3 mb-4">
-            <AlertCircle className="h-5 w-5 text-orange-600" />
-            <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-              Dikkat Gereken
-            </h3>
-          </div>
-          <div className="space-y-3">
-            <div className="text-sm">
-              <p className="font-medium text-gray-900 dark:text-gray-100">Geciken görevler</p>
-              <p className="text-red-600">2 görev son tarihi geçti</p>
-            </div>
-            <div className="text-sm">
-              <p className="font-medium text-gray-900 dark:text-gray-100">Sistem güncellemesi</p>
-              <p className="text-orange-600">Yarın bakım zamanı</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {loading && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg">
-            <div className="spinner h-8 w-8 mx-auto mb-4" />
-            <p className="text-gray-600 dark:text-gray-400">Dashboard yükleniyor...</p>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

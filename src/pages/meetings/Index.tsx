@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react'
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Calendar, 
-  Users, 
+import {
+  Plus,
+  Search,
+  Filter,
+  Calendar,
+  Users,
+  MapPin,
   Clock,
+  MoreHorizontal,
+  Grid,
   CheckCircle2,
-  AlertCircle,
-  Grid3x3,
   List,
+  AlertCircle,
   BarChart3
 } from 'lucide-react'
 import type { Meeting } from '../../types/meetings'
@@ -252,7 +254,7 @@ export default function MeetingsIndex() {
               <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Toplam Toplantı</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.total}</p>
             </div>
-            <BarChart3 className="h-8 w-8 text-blue-600" />
+            <Grid className="h-8 w-8 text-blue-600" />
           </div>
         </div>
         <div className="card">
@@ -322,7 +324,7 @@ export default function MeetingsIndex() {
             size="sm"
             onClick={() => setViewMode('grid')}
           >
-            <Grid3x3 className="h-4 w-4" />
+            <Grid className="h-4 w-4" />
           </Button>
           <Button
             variant={viewMode === 'list' ? 'default' : 'outline'}

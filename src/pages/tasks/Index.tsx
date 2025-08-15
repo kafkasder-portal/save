@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react'
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Calendar, 
-  User, 
-  Flag,
-  CheckCircle2,
+import {
+  Plus,
+  Search,
+  Filter,
+  Calendar,
+  Users,
+  MapPin,
   Clock,
-  AlertCircle,
-  Grid3x3,
+  MoreHorizontal,
+  Grid,
+  CheckCircle2,
   List,
-  BarChart3,
-  Eye
+  AlertCircle,
+  BarChart3
 } from 'lucide-react'
 import type { Task } from '../../types/tasks'
 import toast from 'react-hot-toast'
@@ -385,7 +385,7 @@ export default function TasksIndex() {
             size="sm"
             onClick={() => setViewMode('grid')}
           >
-            <Grid3X3 className="h-4 w-4" />
+            <Grid className="h-4 w-4" />
           </Button>
           <Button
             variant={viewMode === 'list' ? 'default' : 'outline'}
@@ -473,7 +473,7 @@ export default function TasksIndex() {
                       </td>
                       <td className="table-cell">
                         <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-gray-500" />
+                          <Users className="h-4 w-4 text-gray-500" />
                           <span className="text-sm">{task.assignee?.full_name || 'Atanmamış'}</span>
                           {task.assigned_to === currentUserId && (
                             <Badge variant="info" className="text-xs">Benim</Badge>
@@ -517,7 +517,7 @@ export default function TasksIndex() {
                             variant="outline"
                             onClick={() => handleViewDetails(task)}
                           >
-                            <Eye className="h-4 w-4" />
+                            <MoreHorizontal className="h-4 w-4" />
                           </Button>
                           {canCompleteTask && task.status === 'pending' && (
                             <Button
