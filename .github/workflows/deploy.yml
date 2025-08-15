@@ -1,0 +1,305 @@
+name: Deploy to Vercel
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  test:
+    name: Test & Quality Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: TypeScript Check
+      run: npm run type-check
+      
+    - name: Lint Check
+      run: npm run lint
+      
+    - name: Run Tests
+      run: npm run test:ci
+      
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: |
+          test-results.xml
+          coverage/
+          
+    - name: Upload Coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage/lcov.info
+        fail_ci_if_error: false
+
+  build:
+    name: Build Project
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build Project
+      run: npm run build
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        VITE_API_BASE_URL: /api
+        VITE_ENABLE_PERFORMANCE_MONITORING: true
+        VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+        CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        
+    - name: Bundle Analysis
+      run: npm run analyze:bundle
+      
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-files
+        path: |
+          dist/
+          reports/
+          
+    - name: Performance Budget Check
+      run: |
+        # Check bundle size
+        BUNDLE_SIZE=$(du -sb dist | cut -f1)
+        MAX_SIZE=5242880  # 5MB
+        if [ $BUNDLE_SIZE -gt $MAX_SIZE ]; then
+          echo "❌ Bundle size ($BUNDLE_SIZE bytes) exceeds limit ($MAX_SIZE bytes)"
+          exit 1
+        else
+          echo "✅ Bundle size OK: $BUNDLE_SIZE bytes"
+        fi
+
+  deploy-preview:
+    name: Deploy Preview
+    runs-on: ubuntu-latest
+    needs: [test, build]
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'npm'
+        
+    - name: Install Vercel CLI
+      run: npm install --global vercel@latest
+      
+    - name: Pull Vercel Environment Information
+      run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+      
+    - name: Build Project Artifacts
+      run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        
+    - name: Deploy Project Artifacts to Vercel
+      id: deploy
+      run: |
+        DEPLOY_URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+        echo "preview_url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+        echo "🚀 Preview deployed to: $DEPLOY_URL"
+        
+    - name: Comment PR
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const deployUrl = '${{ steps.deploy.outputs.preview_url }}';
+          const comment = `## 🚀 Deploy Preview
+          
+          **Preview URL:** ${deployUrl}
+          
+          ### ✅ Checks Passed
+          - TypeScript compilation
+          - Linting
+          - Unit tests
+          - Bundle size analysis
+          
+          ### 📊 Build Info
+          - **Commit:** \`${{ github.sha }}\`
+          - **Branch:** \`${{ github.head_ref }}\`
+          - **Environment:** Preview
+          
+          ---
+          *Deployed via GitHub Actions*`;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+  deploy-production:
+    name: Deploy Production
+    runs-on: ubuntu-latest
+    needs: [test, build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'npm'
+        
+    - name: Install Vercel CLI
+      run: npm install --global vercel@latest
+      
+    - name: Pull Vercel Environment Information
+      run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      
+    - name: Build Project Artifacts
+      run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL_PROD }}
+        VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY_PROD }}
+        VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+        CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        
+    - name: Deploy Project Artifacts to Vercel
+      id: deploy
+      run: |
+        DEPLOY_URL=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+        echo "production_url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+        echo "🚀 Production deployed to: $DEPLOY_URL"
+        
+    - name: Run Post-Deploy Health Check
+      run: |
+        sleep 30  # Wait for deployment to be ready
+        DEPLOY_URL="${{ steps.deploy.outputs.production_url }}"
+        
+        # Health check
+        HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $DEPLOY_URL)
+        if [ $HTTP_CODE -ne 200 ]; then
+          echo "❌ Health check failed: HTTP $HTTP_CODE"
+          exit 1
+        fi
+        
+        # API health check
+        API_CODE=$(curl -s -o /dev/null -w "%{http_code}" $DEPLOY_URL/api/health)
+        if [ $API_CODE -ne 200 ]; then
+          echo "❌ API health check failed: HTTP $API_CODE"
+          exit 1
+        fi
+        
+        echo "✅ All health checks passed"
+        
+    - name: Create Release
+      if: success()
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ github.run_number }}
+        release_name: Release v${{ github.run_number }}
+        body: |
+          ## 🚀 Production Deploy v${{ github.run_number }}
+          
+          **Deployed to:** ${{ steps.deploy.outputs.production_url }}
+          **Commit:** ${{ github.sha }}
+          
+          ### Changes
+          ${{ github.event.head_commit.message }}
+          
+          ### Deploy Info
+          - ✅ All tests passed
+          - ✅ Bundle size within limits
+          - ✅ Health checks passed
+          - ✅ Performance monitoring active
+        draft: false
+        prerelease: false
+
+  lighthouse:
+    name: Lighthouse Performance Audit
+    runs-on: ubuntu-latest
+    needs: deploy-preview
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Wait for deployment
+      run: sleep 60
+      
+    - name: Run Lighthouse CI
+      uses: treosh/lighthouse-ci-action@v10
+      with:
+        configPath: './lighthouserc.json'
+        temporaryPublicStorage: true
+        runs: 3
+      env:
+        LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run Security Audit
+      run: npm audit --audit-level=moderate
+      
+    - name: Run Dependency Check
+      run: |
+        npx audit-ci --moderate
+        
+    - name: Check for Unused Dependencies
+      run: |
+        npx depcheck --ignores="@types/*,@testing-library/*"
