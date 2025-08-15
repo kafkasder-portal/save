@@ -18,23 +18,60 @@
   </head>
   <body>
     <div id="root">
-      <div style="padding: 20px; font-family: Arial; background: lightgreen; text-align: center;">
-        <h1>🔧 HTML Test</h1>
-        <p>Bu HTML direkt olarak çalışıyor (JavaScript olmadan)</p>
-        <p>Eğer bu görünüyorsa, sorun React/JavaScript'te</p>
+      <div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: Arial, sans-serif;">
+        <div style="text-align: center;">
+          <div style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+          <p>Yükleniyor...</p>
+        </div>
       </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>
+    <style>
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
     <script>
-      console.log('HTML loaded, checking if main.tsx will load...');
+      // Error handling for React loading
+      window.addEventListener('error', function(e) {
+        console.error('JavaScript error:', e.error);
+        const root = document.getElementById('root');
+        if (root) {
+          root.innerHTML = `
+            <div style="padding: 20px; font-family: Arial; background: #fee; border: 1px solid #fcc; border-radius: 4px; margin: 20px;">
+              <h2>❌ Uygulama Yüklenemedi</h2>
+              <p>Bir hata oluştu. Lütfen sayfayı yenileyin veya daha sonra tekrar deneyin.</p>
+              <p><strong>Hata:</strong> ${e.error?.message || 'Bilinmeyen hata'}</p>
+              <button onclick="window.location.reload()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                Sayfayı Yenile
+              </button>
+            </div>
+          `;
+        }
+      });
+
+      // Check if React loaded after 5 seconds
       setTimeout(() => {
         const root = document.getElementById('root');
-        if (root && root.innerHTML.includes('HTML Test')) {
-          console.log('React did not override HTML - React is not working');
-        } else {
-          console.log('React successfully loaded and replaced HTML');
+        if (root && root.children.length === 1 && root.children[0].tagName === 'DIV' && root.children[0].style.display === 'flex') {
+          console.log('React did not load - showing error');
+          root.innerHTML = `
+            <div style="padding: 20px; font-family: Arial; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; margin: 20px;">
+              <h2>⚠️ Uygulama Yüklenemedi</h2>
+              <p>React uygulaması yüklenemedi. Bu genellikle şu sebeplerden olur:</p>
+              <ul style="text-align: left; max-width: 500px; margin: 10px auto;">
+                <li>Çevre değişkenleri eksik (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)</li>
+                <li>Build hatası</li>
+                <li>Ağ bağlantı sorunu</li>
+              </ul>
+              <button onclick="window.location.reload()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                Tekrar Dene
+              </button>
+            </div>
+          `;
         }
-      }, 2000);
+      }, 5000);
     </script>
   </body>
 </html>
