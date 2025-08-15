@@ -31,7 +31,9 @@
     "performance:report": "open reports/performance-report.html",
     "clean": "rm -rf dist node_modules/.vite",
     "db:setup": "cd supabase && supabase db reset",
-    "postinstall": "cd api && npm install"
+    "postinstall": "cd api && npm install",
+    "vercel-build": "npm run build",
+    "vercel-dev": "npm run dev"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.0",
@@ -43,6 +45,8 @@
     "@supabase/supabase-js": "^2.45.0",
     "@tanstack/react-query": "^5.0.0",
     "@tanstack/react-query-devtools": "^5.0.0",
+    "@vercel/analytics": "^1.5.0",
+    "@vercel/speed-insights": "^1.2.0",
     "@zxing/library": "^0.20.0",
     "axios": "^1.11.0",
     "class-variance-authority": "^0.7.0",

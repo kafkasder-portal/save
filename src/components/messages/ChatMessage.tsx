@@ -3,7 +3,7 @@ import { Message } from '@/types/internal-messages'
 import { format } from 'date-fns'
 import { tr } from 'date-fns/locale'
 import { MoreVertical, Edit, Trash2, Reply } from 'lucide-react'
-import { Button } from '@components/ui/button'
+import { Button } from '@components/ui/Button'
 
 interface ChatMessageProps {
   message: Message

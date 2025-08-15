@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Eye, EyeOff, Loader2, Mail, Lock, User, Phone, Building } from 'lucide-react'
 import { useAuthStore } from '../store/auth'
-import { Button } from '../components/ui/button'
+import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/card'
 
 const loginSchema = z.object({

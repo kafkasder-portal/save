@@ -9,9 +9,10 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
-  Grid3X3,
+  Grid3x3,
   List,
-  BarChart3
+  BarChart3,
+  Eye
 } from 'lucide-react'
 import type { Task } from '../../types/tasks'
 import toast from 'react-hot-toast'

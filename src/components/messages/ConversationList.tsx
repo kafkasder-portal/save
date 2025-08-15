@@ -1,6 +1,6 @@
 import React from 'react'
 import { Search, MoreVertical, Circle } from 'lucide-react'
-import { Button } from '@components/ui/button'
+import { Button } from '@components/ui/Button'
 import { Input } from '@components/ui/input'
 
 interface Conversation {

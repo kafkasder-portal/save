@@ -8,7 +8,7 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
-  Grid3X3,
+  Grid3x3,
   List,
   BarChart3
 } from 'lucide-react'
